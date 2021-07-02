@@ -88,8 +88,8 @@ class DWARFStructs(object):
                 Target machine address size, in bytes (4 or 8). (See spec
                 section 7.5.1)
         """
-        assert dwarf_format == 32 or dwarf_format == 64
-        assert address_size == 8 or address_size == 4
+        assert dwarf_format in [32, 64]
+        assert address_size in [8, 4]
         self.little_endian = little_endian
         self.dwarf_format = dwarf_format
         self.address_size = address_size
@@ -311,9 +311,8 @@ class _InitialLengthAdapter(Adapter):
     def _decode(self, obj, context):
         if obj.first < 0xFFFFFF00:
             return obj.first
+        if obj.first == 0xFFFFFFFF:
+            return obj.second
         else:
-            if obj.first == 0xFFFFFFFF:
-                return obj.second
-            else:
-                raise ConstructError("Failed decoding initial length for %X" % (
-                    obj.first))
+            raise ConstructError("Failed decoding initial length for %X" % (
+                obj.first))

@@ -33,8 +33,7 @@ class TestLineProgram(unittest.TestCase):
             # followed by NULL
             b'\x00')
 
-        lp = LineProgram(header, stream, ds, 0, len(stream.getvalue()))
-        return lp
+        return LineProgram(header, stream, ds, 0, len(stream.getvalue()))
 
     def assertLineState(self, state, **kwargs):
         """ Assert that the state attributes specified in kwargs have the given

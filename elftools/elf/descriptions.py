@@ -57,10 +57,10 @@ def describe_p_type(x):
 
 
 def describe_p_flags(x):
-    s = ''
-    for flag in (P_FLAGS.PF_R, P_FLAGS.PF_W, P_FLAGS.PF_X):
-        s += _DESCR_P_FLAGS[flag] if (x & flag) else ' '
-    return s
+    return ''.join(
+        _DESCR_P_FLAGS[flag] if (x & flag) else ' '
+        for flag in (P_FLAGS.PF_R, P_FLAGS.PF_W, P_FLAGS.PF_X)
+    )
 
 
 def describe_rh_flags(x):
@@ -90,17 +90,14 @@ def describe_sh_type(x):
 
 
 def describe_sh_flags(x):
-    s = ''
-    for flag in (
+    s = ''.join(_DESCR_SH_FLAGS[flag] if (x & flag) else '' for flag in (
             SH_FLAGS.SHF_WRITE, SH_FLAGS.SHF_ALLOC, SH_FLAGS.SHF_EXECINSTR,
             SH_FLAGS.SHF_MERGE, SH_FLAGS.SHF_STRINGS, SH_FLAGS.SHF_INFO_LINK,
             SH_FLAGS.SHF_LINK_ORDER, SH_FLAGS.SHF_OS_NONCONFORMING,
             SH_FLAGS.SHF_GROUP, SH_FLAGS.SHF_TLS, SH_FLAGS.SHF_MASKOS,
-            SH_FLAGS.SHF_EXCLUDE):
-        s += _DESCR_SH_FLAGS[flag] if (x & flag) else ''
-    if not x & SH_FLAGS.SHF_EXCLUDE:
-        if x & SH_FLAGS.SHF_MASKPROC:
-            s += 'p'
+            SH_FLAGS.SHF_EXCLUDE))
+    if not x & SH_FLAGS.SHF_EXCLUDE and x & SH_FLAGS.SHF_MASKPROC:
+        s += 'p'
     return s
 
 
@@ -223,27 +220,26 @@ def describe_attr_tag_arm(tag, val, extra):
     idx = ENUM_ATTR_TAG_ARM[tag] - 1
     d_entry = _DESCR_ATTR_VAL_ARM[idx]
 
-    if d_entry is None:
-        if tag == 'TAG_COMPATIBILITY':
-            return (_DESCR_ATTR_TAG_ARM[tag]
-                    + 'flag = %d, vendor = %s' % (val, extra))
-
-        elif tag == 'TAG_ALSO_COMPATIBLE_WITH':
-            if val.tag == 'TAG_CPU_ARCH':
-                return _DESCR_ATTR_TAG_ARM[tag] + d_entry[val]
-
-            else:
-                return _DESCR_ATTR_TAG_ARM[tag] + '??? (%d)' % val.tag
-
-        elif tag == 'TAG_NODEFAULTS':
-            return _DESCR_ATTR_TAG_ARM[tag] + 'True'
-
-        s = _DESCR_ATTR_TAG_ARM[tag]
-        s += '"%s"' % val if val else ''
-        return s
-
-    else:
+    if d_entry is not None:
         return _DESCR_ATTR_TAG_ARM[tag] + d_entry[val]
+
+    if tag == 'TAG_ALSO_COMPATIBLE_WITH':
+        if val.tag == 'TAG_CPU_ARCH':
+            return _DESCR_ATTR_TAG_ARM[tag] + d_entry[val]
+
+        else:
+            return _DESCR_ATTR_TAG_ARM[tag] + '??? (%d)' % val.tag
+
+    elif tag == 'TAG_COMPATIBILITY':
+        return (_DESCR_ATTR_TAG_ARM[tag]
+                + 'flag = %d, vendor = %s' % (val, extra))
+
+    elif tag == 'TAG_NODEFAULTS':
+        return _DESCR_ATTR_TAG_ARM[tag] + 'True'
+
+    s = _DESCR_ATTR_TAG_ARM[tag]
+    s += '"%s"' % val if val else ''
+    return s
 
 
 #-------------------------------------------------------------------------------

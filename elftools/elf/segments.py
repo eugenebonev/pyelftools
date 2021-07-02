@@ -45,12 +45,7 @@ class Segment(object):
         if (    secflags & SH_FLAGS.SHF_TLS and
                 segtype in ('PT_TLS', 'PT_GNU_RELRO', 'PT_LOAD')):
             pass
-        # PT_TLS segment contains only SHF_TLS sections, PT_PHDR no sections
-        # at all
-        elif (  (secflags & SH_FLAGS.SHF_TLS) == 0 and
-                segtype not in ('PT_TLS', 'PT_PHDR')):
-            pass
-        else:
+        elif secflags & SH_FLAGS.SHF_TLS != 0 or segtype in ('PT_TLS', 'PT_PHDR'):
             return False
 
         # PT_LOAD and similar segments only have SHF_ALLOC sections.
@@ -69,9 +64,11 @@ class Segment(object):
             # The third condition is the 'strict' one - an empty section will
             # not match at the very end of the segment (unless the segment is
             # also zero size, which is handled by the second condition).
-            if not (secaddr >= vaddr and
-                    secaddr - vaddr + section['sh_size'] <= self['p_memsz'] and
-                    secaddr - vaddr <= self['p_memsz'] - 1):
+            if (
+                secaddr < vaddr
+                or secaddr - vaddr + section['sh_size'] > self['p_memsz']
+                or secaddr - vaddr > self['p_memsz'] - 1
+            ):
                 return False
 
         # If we've come this far and it's a NOBITS section, it's in the segment

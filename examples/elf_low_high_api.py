@@ -83,7 +83,6 @@ def section_info_highlevel(stream):
             section.get_symbol(num_symbols - 1).name))
 
 
-if __name__ == '__main__':
-    if sys.argv[1] == '--test':
-        for filename in sys.argv[2:]:
-            process_file(filename)
+if __name__ == '__main__' and sys.argv[1] == '--test':
+    for filename in sys.argv[2:]:
+        process_file(filename)

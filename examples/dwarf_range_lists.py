@@ -73,13 +73,12 @@ def attribute_has_range_list(attr):
     """ Only some attributes can have range list values, if they have the
         required DW_FORM (rangelistptr "class" in DWARF spec v3)
     """
-    if attr.name == 'DW_AT_ranges':
-        if attr.form in ('DW_FORM_data4', 'DW_FORM_data8'):
-            return True
-    return False
+    return attr.name == 'DW_AT_ranges' and attr.form in (
+        'DW_FORM_data4',
+        'DW_FORM_data8',
+    )
 
 
-if __name__ == '__main__':
-    if sys.argv[1] == '--test':
-        for filename in sys.argv[2:]:
-            process_file(filename)
+if __name__ == '__main__' and sys.argv[1] == '--test':
+    for filename in sys.argv[2:]:
+        process_file(filename)

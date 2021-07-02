@@ -107,11 +107,9 @@ def decode_bin(data):
     if len(data) & 7:
         raise ValueError("Data length must be a multiple of 8")
     i = 0
-    j = 0
     l = len(data) // 8
     chars = [b""] * l
-    while j < l:
+    for j in range(l):
         chars[j] = _bin_to_char[data[i:i+8]]
         i += 8
-        j += 1
     return b"".join(chars)

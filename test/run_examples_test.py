@@ -61,10 +61,9 @@ def run_example_and_compare(example_path):
     # Comparison is done as lists of lines, to avoid EOL problems
     if example_out.split() == ref_str.split():
         return True
-    else:
-        testlog.info('.......FAIL comparison')
-        dump_output_to_temp_files(testlog, example_out, ref_str)
-        return False
+    testlog.info('.......FAIL comparison')
+    dump_output_to_temp_files(testlog, example_out, ref_str)
+    return False
 
 
 def main():

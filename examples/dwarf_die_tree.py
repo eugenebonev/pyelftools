@@ -60,7 +60,6 @@ def die_info_rec(die, indent_level='    '):
         die_info_rec(child, child_indent)
 
 
-if __name__ == '__main__':
-    if sys.argv[1] == '--test':
-        for filename in sys.argv[2:]:
-            process_file(filename)
+if __name__ == '__main__' and sys.argv[1] == '--test':
+    for filename in sys.argv[2:]:
+        process_file(filename)

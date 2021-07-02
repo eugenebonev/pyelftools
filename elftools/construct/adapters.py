@@ -195,10 +195,7 @@ class PaddedStringAdapter(Adapter):
         else:
             obj = obj.center(size, self.padchar)
         if len(obj) > size:
-            if self.trimdir == "right":
-                obj = obj[:size]
-            else:
-                obj = obj[-size:]
+            obj = obj[:size] if self.trimdir == "right" else obj[-size:]
         return obj
 
 class LengthValueAdapter(Adapter):

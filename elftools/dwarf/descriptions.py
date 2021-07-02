@@ -399,10 +399,7 @@ def _make_extra_mapper(mapping, default, default_interpolate_value=False):
         value that should be displayed.
     """
     def mapper(attr, die, section_offset):
-        if default_interpolate_value:
-            d = default % attr.value
-        else:
-            d = default
+        d = default % attr.value if default_interpolate_value else default
         return mapping.get(attr.value, d)
     return mapper
 
@@ -573,9 +570,11 @@ class ExprDumper(object):
             Returns a string representing the expression.
         """
         parsed = self.expr_parser.parse_expr(expr)
-        s = []
-        for deo in parsed:
-            s.append(self._dump_to_string(deo.op, deo.op_name, deo.args, cu_offset))
+        s = [
+            self._dump_to_string(deo.op, deo.op_name, deo.args, cu_offset)
+            for deo in parsed
+        ]
+
         return '; '.join(s)
 
     def _init_lookups(self):
@@ -586,7 +585,7 @@ class ExprDumper(object):
             'DW_OP_bra', 'DW_OP_skip', 'DW_OP_fbreg', 'DW_OP_piece',
             'DW_OP_deref_size', 'DW_OP_xderef_size', 'DW_OP_regx',])
 
-        for n in range(0, 32):
+        for n in range(32):
             self._ops_with_decimal_arg.add('DW_OP_breg%s' % n)
 
         self._ops_with_two_decimal_args = set(['DW_OP_bregx', 'DW_OP_bit_piece'])
@@ -603,13 +602,12 @@ class ExprDumper(object):
             cu_offset = 0
 
         if len(args) == 0:
-            if opcode_name.startswith('DW_OP_reg'):
-                regnum = int(opcode_name[9:])
-                return '%s (%s)' % (
-                    opcode_name,
-                    describe_reg_name(regnum, _MACHINE_ARCH))
-            else:
+            if not opcode_name.startswith('DW_OP_reg'):
                 return opcode_name
+            regnum = int(opcode_name[9:])
+            return '%s (%s)' % (
+                opcode_name,
+                describe_reg_name(regnum, _MACHINE_ARCH))
         elif opcode_name in self._ops_with_decimal_arg:
             if opcode_name.startswith('DW_OP_breg'):
                 regnum = int(opcode_name[10:])
@@ -630,9 +628,21 @@ class ExprDumper(object):
         elif opcode_name in self._ops_with_two_decimal_args:
             return '%s: %s %s' % (opcode_name, args[0], args[1])
         elif opcode_name == 'DW_OP_GNU_entry_value':
-            return '%s: (%s)' % (opcode_name, ','.join([self._dump_to_string(deo.op, deo.op_name, deo.args) for deo in args[0]]))
+            return '%s: (%s)' % (
+                opcode_name,
+                ','.join(
+                    self._dump_to_string(deo.op, deo.op_name, deo.args)
+                    for deo in args[0]
+                ),
+            )
+
         elif opcode_name == 'DW_OP_implicit_value':
-            return "%s %s byte block: %s" % (opcode_name, len(args[0]), ''.join(["%x " % b for b in args[0]]))
+            return "%s %s byte block: %s" % (
+                opcode_name,
+                len(args[0]),
+                ''.join("%x " % b for b in args[0]),
+            )
+
         elif opcode_name == 'DW_OP_GNU_parameter_ref':
             return "%s: <0x%x>" % (opcode_name, args[0] + cu_offset)
         elif opcode_name == 'DW_OP_GNU_implicit_pointer':

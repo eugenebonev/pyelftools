@@ -45,7 +45,6 @@ def process_file(filename):
             # We're interested in the filename...
             print('    name=%s' % top_DIE.get_full_path())
 
-if __name__ == '__main__':
-    if sys.argv[1] == '--test':
-        for filename in sys.argv[2:]:
-            process_file(filename)
+if __name__ == '__main__' and sys.argv[1] == '--test':
+    for filename in sys.argv[2:]:
+        process_file(filename)
