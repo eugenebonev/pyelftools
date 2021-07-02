@@ -366,7 +366,7 @@ ENUM_DW_FORM = dict(
 )
 
 # Inverse mapping for ENUM_DW_FORM
-DW_FORM_raw2name = dict((v, k) for k, v in iteritems(ENUM_DW_FORM))
+DW_FORM_raw2name = {v: k for k, v in iteritems(ENUM_DW_FORM)}
 
 # See http://www.airs.com/blog/archives/460
 DW_EH_encoding_flags = dict(

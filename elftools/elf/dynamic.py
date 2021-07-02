@@ -286,12 +286,14 @@ class DynamicSegment(Segment, Dynamic):
             nearest_ptr = None
             for tag in self.iter_tags():
                 tag_ptr = tag['d_ptr']
-                if tag['d_tag'] == 'DT_SYMENT':
-                    if self._symbol_size != tag['d_val']:
-                        # DT_SYMENT is the size of one symbol entry. It must be
-                        # the same as returned by Elf_Sym.sizeof.
-                        raise ELFError('DT_SYMENT (%d) != Elf_Sym (%d).' %
-                                       (tag['d_val'], self._symbol_size))
+                if (
+                    tag['d_tag'] == 'DT_SYMENT'
+                    and self._symbol_size != tag['d_val']
+                ):
+                    # DT_SYMENT is the size of one symbol entry. It must be
+                    # the same as returned by Elf_Sym.sizeof.
+                    raise ELFError('DT_SYMENT (%d) != Elf_Sym (%d).' %
+                                   (tag['d_val'], self._symbol_size))
                 if (tag_ptr > tab_ptr and
                         (nearest_ptr is None or nearest_ptr > tag_ptr)):
                     nearest_ptr = tag_ptr

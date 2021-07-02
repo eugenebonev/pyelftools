@@ -485,7 +485,7 @@ class CFIEntry(object):
         self.offset = offset
         self.cie = cie
         self._decoded_table = None
-        self.augmentation_dict = augmentation_dict if augmentation_dict else {}
+        self.augmentation_dict = augmentation_dict or {}
         self.augmentation_bytes = augmentation_bytes
 
     def get_decoded(self):
@@ -718,7 +718,8 @@ _PRIMARY_ARG_MASK = 0b00111111
 # This dictionary is filled by automatically scanning the constants module
 # for DW_CFA_* instructions, and mapping their values to names. Since all
 # names were imported from constants with `import *`, we look in globals()
-_OPCODE_NAME_MAP = {}
-for name in list(iterkeys(globals())):
-    if name.startswith('DW_CFA'):
-        _OPCODE_NAME_MAP[globals()[name]] = name
+_OPCODE_NAME_MAP = {
+    globals()[name]: name
+    for name in list(iterkeys(globals()))
+    if name.startswith('DW_CFA')
+}

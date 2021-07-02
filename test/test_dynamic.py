@@ -104,11 +104,12 @@ class TestDynamic(unittest.TestCase):
                 elf = ELFFile(f)
                 dyn = elf.get_section_by_name('.dynamic')
 
-                seen = set()
-                for tag in dyn.iter_tags():
-                    if type(tag.entry.d_tag) is str and \
-                            tag.entry.d_tag.startswith("DT_SUNW"):
-                        seen.add(tag.entry.d_tag)
+                seen = {
+                    tag.entry.d_tag
+                    for tag in dyn.iter_tags()
+                    if type(tag.entry.d_tag) is str
+                    and tag.entry.d_tag.startswith("DT_SUNW")
+                }
 
             return seen
 

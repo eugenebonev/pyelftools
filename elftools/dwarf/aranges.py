@@ -64,38 +64,36 @@ class ARanges(object):
         offset = 0
 
         # one loop == one "set" == one CU
-        while offset < self.size :
+        while offset < self.size:
             aranges_header = struct_parse(self.structs.Dwarf_aranges_header,
                 self.stream, offset)
             addr_size = self._get_addr_size_struct(aranges_header["address_size"])
 
             # No segmentation
-            if aranges_header["segment_size"] == 0:
-                # pad to nearest multiple of tuple size
-                tuple_size = aranges_header["address_size"] * 2
-                fp = self.stream.tell()
-                seek_to = int(math.ceil(fp/float(tuple_size)) * tuple_size)
-                self.stream.seek(seek_to)
-
-                # entries in this set/CU
-                addr = struct_parse(addr_size('addr'), self.stream)
-                length = struct_parse(addr_size('length'), self.stream)
-                while addr != 0 or length != 0:
-                    # 'begin_addr length info_offset version address_size segment_size'
-                    entries.append(
-                        ARangeEntry(begin_addr=addr,
-                            length=length,
-                            info_offset=aranges_header["debug_info_offset"],
-                            unit_length=aranges_header["unit_length"],
-                            version=aranges_header["version"],
-                            address_size=aranges_header["address_size"],
-                            segment_size=aranges_header["segment_size"]))
-                    addr = struct_parse(addr_size('addr'), self.stream)
-                    length = struct_parse(addr_size('length'), self.stream)
-            # Segmentation exists in executable
-            elif aranges_header["segment_size"] != 0:
+            if aranges_header["segment_size"] != 0:
                 raise NotImplementedError("Segmentation not implemented")
 
+            # pad to nearest multiple of tuple size
+            tuple_size = aranges_header["address_size"] * 2
+            fp = self.stream.tell()
+            seek_to = int(math.ceil(fp/float(tuple_size)) * tuple_size)
+            self.stream.seek(seek_to)
+
+            # entries in this set/CU
+            addr = struct_parse(addr_size('addr'), self.stream)
+            length = struct_parse(addr_size('length'), self.stream)
+            while addr != 0 or length != 0:
+                # 'begin_addr length info_offset version address_size segment_size'
+                entries.append(
+                    ARangeEntry(begin_addr=addr,
+                        length=length,
+                        info_offset=aranges_header["debug_info_offset"],
+                        unit_length=aranges_header["unit_length"],
+                        version=aranges_header["version"],
+                        address_size=aranges_header["address_size"],
+                        segment_size=aranges_header["segment_size"]))
+                addr = struct_parse(addr_size('addr'), self.stream)
+                length = struct_parse(addr_size('length'), self.stream)
             offset = (offset
                 + aranges_header.unit_length
                 + self.structs.initial_length_field_size())
@@ -108,6 +106,5 @@ class ARanges(object):
         """
         if addr_header_value == 4:
             return self.structs.Dwarf_uint32
-        else:
-            assert addr_header_value == 8
-            return self.structs.Dwarf_uint64
+        assert addr_header_value == 8
+        return self.structs.Dwarf_uint64

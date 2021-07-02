@@ -106,16 +106,21 @@ class LocationParser(object):
 
     @staticmethod
     def _attribute_has_loc_expr(attr, dwarf_version):
-        return ((dwarf_version < 4 and attr.form.startswith('DW_FORM_block') and
-            not attr.name == 'DW_AT_const_value') or
-            attr.form == 'DW_FORM_exprloc')
+        return (
+            dwarf_version < 4
+            and attr.form.startswith('DW_FORM_block')
+            and attr.name != 'DW_AT_const_value'
+            or attr.form == 'DW_FORM_exprloc'
+        )
 
     @staticmethod
     def _attribute_has_loc_list(attr, dwarf_version):
-        return ((dwarf_version < 4 and
-                 attr.form in ('DW_FORM_data4', 'DW_FORM_data8') and
-                 not attr.name == 'DW_AT_const_value') or
-                attr.form == 'DW_FORM_sec_offset')
+        return (
+            dwarf_version < 4
+            and attr.form in ('DW_FORM_data4', 'DW_FORM_data8')
+            and attr.name != 'DW_AT_const_value'
+            or attr.form == 'DW_FORM_sec_offset'
+        )
 
     @staticmethod
     def _attribute_is_loclistptr_class(attr):

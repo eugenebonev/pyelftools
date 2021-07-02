@@ -151,12 +151,12 @@ class DIE(object):
         """ Yield all siblings of this DIE
         """
         parent = self.get_parent()
-        if parent:
-            for sibling in parent.iter_children():
-                if sibling is not self:
-                    yield sibling
-        else:
+        if not parent:
             raise StopIteration()
+
+        for sibling in parent.iter_children():
+            if sibling is not self:
+                yield sibling
 
     # The following methods are used while creating the DIE and should not be
     # interesting to consumers
@@ -259,7 +259,7 @@ class DIE(object):
             with preserve_stream_pos(self.stream):
                 value = self.dwarfinfo.get_string_from_table(raw_value)
         elif form == 'DW_FORM_flag':
-            value = not raw_value == 0
+            value = raw_value != 0
         elif form == 'DW_FORM_flag_present':
             value = True
         elif form == 'DW_FORM_indirect':

@@ -281,4 +281,7 @@ class MnemonicItem(object):
         self.mnemonic = mnemonic
 
     def __repr__(self):
-        return '%s ; %s' % (' '.join(['0x%02x' % x for x in self.bytecode]), self.mnemonic)
+        return '%s ; %s' % (
+            ' '.join('0x%02x' % x for x in self.bytecode),
+            self.mnemonic,
+        )

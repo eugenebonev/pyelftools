@@ -417,14 +417,12 @@ class MetaArray(Subconstruct):
         c = 0
         count = self.countfunc(context)
         try:
-            if self.subcon.conflags & self.FLAG_COPY_CONTEXT:
-                while c < count:
+            while c < count:
+                if self.subcon.conflags & self.FLAG_COPY_CONTEXT:
                     obj.append(self.subcon._parse(stream, context.__copy__()))
-                    c += 1
-            else:
-                while c < count:
+                else:
                     obj.append(self.subcon._parse(stream, context))
-                    c += 1
+                c += 1
         except ConstructError as ex:
             raise ArrayError("expected %d, found %d" % (count, c), ex)
         return obj
@@ -432,11 +430,10 @@ class MetaArray(Subconstruct):
         count = self.countfunc(context)
         if len(obj) != count:
             raise ArrayError("expected %d, found %d" % (count, len(obj)))
-        if self.subcon.conflags & self.FLAG_COPY_CONTEXT:
-            for subobj in obj:
+        for subobj in obj:
+            if self.subcon.conflags & self.FLAG_COPY_CONTEXT:
                 self.subcon._build(subobj, stream, context.__copy__())
-        else:
-            for subobj in obj:
+            else:
                 self.subcon._build(subobj, stream, context)
     def _sizeof(self, context):
         return self.subcon._sizeof(context) * self.countfunc(context)
@@ -562,36 +559,26 @@ class RepeatUntil(Subconstruct):
     def _parse(self, stream, context):
         obj = []
         try:
-            if self.subcon.conflags & self.FLAG_COPY_CONTEXT:
-                while True:
+            while True:
+                if self.subcon.conflags & self.FLAG_COPY_CONTEXT:
                     subobj = self.subcon._parse(stream, context.__copy__())
-                    obj.append(subobj)
-                    if self.predicate(subobj, context):
-                        break
-            else:
-                while True:
+                else:
                     subobj = self.subcon._parse(stream, context)
-                    obj.append(subobj)
-                    if self.predicate(subobj, context):
-                        break
+                obj.append(subobj)
+                if self.predicate(subobj, context):
+                    break
         except ConstructError as ex:
             raise ArrayError("missing terminator", ex)
         return obj
     def _build(self, obj, stream, context):
         terminated = False
-        if self.subcon.conflags & self.FLAG_COPY_CONTEXT:
-            for subobj in obj:
-                self.subcon._build(subobj, stream, context.__copy__())
-                if self.predicate(subobj, context):
-                    terminated = True
-                    break
-        else:
-            for subobj in obj:
+        for subobj in obj:
+            if not self.subcon.conflags & self.FLAG_COPY_CONTEXT:
                 subobj = bchr(subobj)
-                self.subcon._build(subobj, stream, context.__copy__())
-                if self.predicate(subobj, context):
-                    terminated = True
-                    break
+            self.subcon._build(subobj, stream, context.__copy__())
+            if self.predicate(subobj, context):
+                terminated = True
+                break
         if not terminated:
             raise ArrayError("missing terminator")
     def _sizeof(self, context):

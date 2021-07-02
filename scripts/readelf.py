@@ -297,11 +297,15 @@ class ReadElf(object):
             self._emit('   %2.2d     ' % nseg)
 
             for section in self.elffile.iter_sections():
-                if (    not section.is_null() and
-                        not ((section['sh_flags'] & SH_FLAGS.SHF_TLS) != 0 and
-                             section['sh_type'] == 'SHT_NOBITS' and
-                             segment['p_type'] != 'PT_TLS') and
-                        segment.section_in_segment(section)):
+                if (
+                    not section.is_null()
+                    and (
+                        section['sh_flags'] & SH_FLAGS.SHF_TLS == 0
+                        or section['sh_type'] != 'SHT_NOBITS'
+                        or segment['p_type'] == 'PT_TLS'
+                    )
+                    and segment.section_in_segment(section)
+                ):
                     self._emit('%s ' % section.name)
 
             self._emitline('')
@@ -411,12 +415,10 @@ class ReadElf(object):
                         if version['filename']:
                             # external symbol
                             version_info = '@%(name)s (%(index)i)' % version
+                        elif version['hidden']:
+                            version_info = '@%(name)s' % version
                         else:
-                            # internal symbol
-                            if version['hidden']:
-                                version_info = '@%(name)s' % version
-                            else:
-                                version_info = '@@%(name)s' % version
+                            version_info = '@@%(name)s' % version
 
                 # symbol names are truncated to 25 chars, similarly to readelf
                 self._emitline('%6d: %s %s %-7s %-6s %-7s %4s %.25s%s' % (
@@ -537,8 +539,6 @@ class ReadElf(object):
                         fieldsize = 8 if self.elffile.elfclass == 32 else 16
                         addend = self._format_hex(rel['r_addend'], lead0x=False)
                         self._emit(' %s   %s' % (' ' * fieldsize, addend))
-                    self._emitline()
-
                 else:
                     symbol = symtable.get_symbol(rel['r_info_sym'])
                     # Some symbols have zero 'st_name', so instead what's used
@@ -570,7 +570,7 @@ class ReadElf(object):
                         self._emit(' %s %x' % (
                             '+' if rel['r_addend'] >= 0 else '-',
                             abs(rel['r_addend'])))
-                    self._emitline()
+                self._emitline()
 
                 # Emit the two additional relocation types for ELF64 MIPS
                 # binaries.
@@ -885,10 +885,7 @@ class ReadElf(object):
         s = '0x' if lead0x else ''
         if fullhex:
             fieldsize = 8 if self.elffile.elfclass == 32 else 16
-        if fieldsize is None:
-            field = '%x'
-        else:
-            field = '%' + '0%sx' % fieldsize
+        field = '%x' if fieldsize is None else '%' + '0%sx' % fieldsize
         return s + field % addr
 
     def _print_version_section_header(self, version_section, name, lead0x=True,
@@ -957,15 +954,12 @@ class ReadElf(object):
 
         symbol = self._versioninfo['versym'].get_symbol(nsym)
         index = symbol.entry['ndx']
-        if not index in ('VER_NDX_LOCAL', 'VER_NDX_GLOBAL'):
+        if index not in ('VER_NDX_LOCAL', 'VER_NDX_GLOBAL'):
             index = int(index)
 
-            if self._versioninfo['type'] == 'GNU':
-                # In GNU versioning mode, the highest bit is used to
-                # store whether the symbol is hidden or not
-                if index & 0x8000:
-                    index &= ~0x8000
-                    symbol_version['hidden'] = True
+            if self._versioninfo['type'] == 'GNU' and index & 0x8000:
+                index &= ~0x8000
+                symbol_version['hidden'] = True
 
             if (self._versioninfo['verdef'] and
                     index <= self._versioninfo['verdef'].num_versions()):
@@ -1084,7 +1078,11 @@ class ReadElf(object):
 
                     attr_desc = describe_attr_value(attr, die, section_offset)
 
-                    if 'DW_OP_fbreg' in attr_desc and current_function and not 'DW_AT_frame_base' in current_function.attributes:
+                    if (
+                        'DW_OP_fbreg' in attr_desc
+                        and current_function
+                        and 'DW_AT_frame_base' not in current_function.attributes
+                    ):
                         postfix = ' [without dw_at_frame_base]'
                     else:
                         postfix = ''
@@ -1267,7 +1265,7 @@ class ReadElf(object):
         """ Dump the aranges table
         """
         aranges_table = self._dwarfinfo.get_aranges()
-        if aranges_table == None:
+        if aranges_table is None:
             return
         # seems redundent, but we need to get the unsorted set of entries to match system readelf
         unordered_entries = aranges_table._get_entries()
@@ -1379,17 +1377,11 @@ class ReadElf(object):
                 self._emit(self._format_hex(
                     line['pc'], fullhex=True, lead0x=False))
 
-                if line['cfa'] is not None:
-                    s = describe_CFI_CFA_rule(line['cfa'])
-                else:
-                    s = 'u'
+                s = describe_CFI_CFA_rule(line['cfa']) if line['cfa'] is not None else 'u'
                 self._emit(' %-9s' % s)
 
                 for regnum in reg_order:
-                    if regnum in line:
-                        s = describe_CFI_register_rule(line[regnum])
-                    else:
-                        s = 'u'
+                    s = describe_CFI_register_rule(line[regnum]) if regnum in line else 'u'
                     self._emit('%-6s' % s)
                 self._emitline()
         self._emitline()

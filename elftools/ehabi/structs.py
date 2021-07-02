@@ -26,10 +26,7 @@ class EHABIStructs(object):
         self._create_structs()
 
     def _create_structs(self):
-        if self._little_endian:
-            self.EHABI_uint32 = ULInt32
-        else:
-            self.EHABI_uint32 = UBInt32
+        self.EHABI_uint32 = ULInt32 if self._little_endian else UBInt32
         self._create_exception_handler_index()
         self._create_exception_handler_table()
 

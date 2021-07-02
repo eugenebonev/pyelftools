@@ -81,20 +81,19 @@ class Section(object):
         # If this section is compressed, deflate it
         if self.compressed:
             c_type = self._compression_type
-            if c_type == 'ELFCOMPRESS_ZLIB':
-                # Read the data to decompress starting right after the
-                # compression header until the end of the section.
-                hdr_size = self.structs.Elf_Chdr.sizeof()
-                self.stream.seek(self['sh_offset'] + hdr_size)
-                compressed = self.stream.read(self['sh_size'] - hdr_size)
-
-                decomp = zlib.decompressobj()
-                result = decomp.decompress(compressed, self.data_size)
-            else:
+            if c_type != 'ELFCOMPRESS_ZLIB':
                 raise ELFCompressionError(
                     'Unknown compression type: {:#0x}'.format(c_type)
                 )
 
+            # Read the data to decompress starting right after the
+            # compression header until the end of the section.
+            hdr_size = self.structs.Elf_Chdr.sizeof()
+            self.stream.seek(self['sh_offset'] + hdr_size)
+            compressed = self.stream.read(self['sh_size'] - hdr_size)
+
+            decomp = zlib.decompressobj()
+            result = decomp.decompress(compressed, self.data_size)
             if len(result) != self._decompressed_size:
                 raise ELFCompressionError(
                     'Decompressed data is {} bytes long, should be {} bytes'

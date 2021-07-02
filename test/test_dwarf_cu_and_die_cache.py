@@ -12,17 +12,15 @@ from elftools.common.py3compat import bytes2str
 
 class TestCacheLUTandDIEref(unittest.TestCase):
     def dprint(self, list):
-        if False:
-            self.oprint(list)
+        pass
 
     def oprint(self, list):
-        if False:
-            print(list)
+        pass
 
     def test_die_from_LUTentry(self):
         lines = ['']
         with open(os.path.join('test', 'testfiles_for_unittests',
-                               'lambda.elf'), 'rb') as f:
+                                   'lambda.elf'), 'rb') as f:
             elffile = ELFFile(f)
             self.assertTrue(elffile.has_dwarf_info())
 
@@ -31,9 +29,9 @@ class TestCacheLUTandDIEref(unittest.TestCase):
             for (k, v) in pt.items():
                 ndie = dwarf.get_DIE_from_lut_entry(v)
                 self.dprint(ndie)
-                if not 'DW_AT_type' in ndie.attributes:
+                if 'DW_AT_type' not in ndie.attributes:
                     continue
-                if not 'DW_AT_name' in ndie.attributes:
+                if 'DW_AT_name' not in ndie.attributes:
                     continue
                 name = bytes2str(ndie.attributes['DW_AT_name'].value)
                 tlist = []

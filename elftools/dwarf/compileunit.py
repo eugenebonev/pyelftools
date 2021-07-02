@@ -186,8 +186,7 @@ class CompileUnit(object):
         yield die
         if die.has_children:
             for c in die.iter_children():
-                for d in self._iter_DIE_subtree(c):
-                    yield d
+                yield from self._iter_DIE_subtree(c)
             yield die._terminator
 
     def _get_cached_DIE(self, offset):

@@ -61,8 +61,7 @@ class LineState(object):
         self.discriminator = 0
 
     def __repr__(self):
-        a = ['<LineState %x:' % id(self)]
-        a.append('  address = 0x%x' % self.address)
+        a = ['<LineState %x:' % id(self), '  address = 0x%x' % self.address]
         for attr in ('file', 'line', 'column', 'is_stmt', 'basic_block',
                      'end_sequence', 'prologue_end', 'epilogue_begin', 'isa',
                      'discriminator'):

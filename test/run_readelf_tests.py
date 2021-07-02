@@ -214,9 +214,8 @@ def main():
         help= 'Limit the test one one readelf option.')
     args = argparser.parse_args()
 
-    if args.parallel:
-        if args.verbose or args.keep_going == False:
-            print('WARNING: parallel mode disables verbosity and always keeps going')
+    if args.parallel and (args.verbose or args.keep_going == False):
+        print('WARNING: parallel mode disables verbosity and always keeps going')
 
     if args.verbose:
         testlog.info('Running in verbose mode')

@@ -69,30 +69,29 @@ class EHABIInfo(object):
             if word0 & 0x80000000 == 0:
                 # highest bit is one, generic model
                 return GenericEHABIEntry(function_offset, arm_expand_prel31(word0, eh_table_offset))
+            # highest bit is one, arm compact model
+            # highest half must be 0b1000 for compact model
+            if word0 & 0x70000000 != 0:
+                return CorruptEHABIEntry('Corrupt ARM compact model table entry: %x' % n)
+            per_index = (word0 >> 24) & 0x7f
+            if per_index == 0:
+                # arm compact model 0
+                opcode = [(word0 & 0xFF0000) >> 16, (word0 & 0xFF00) >> 8, word0 & 0xFF]
+                return EHABIEntry(function_offset, per_index, opcode)
+            elif per_index in [1, 2]:
+                # arm compact model 1/2
+                more_word = (word0 >> 16) & 0xff
+                opcode = [(word0 >> 8) & 0xff, (word0 >> 0) & 0xff]
+                self._arm_idx_section.stream.seek(eh_table_offset + 4)
+                for _ in range(more_word):
+                    r = struct_parse(self._struct.EH_table_struct, self._arm_idx_section.stream)['word0']
+                    opcode.append((r >> 24) & 0xFF)
+                    opcode.append((r >> 16) & 0xFF)
+                    opcode.append((r >> 8) & 0xFF)
+                    opcode.append((r >> 0) & 0xFF)
+                return EHABIEntry(function_offset, per_index, opcode, eh_table_offset=eh_table_offset)
             else:
-                # highest bit is one, arm compact model
-                # highest half must be 0b1000 for compact model
-                if word0 & 0x70000000 != 0:
-                    return CorruptEHABIEntry('Corrupt ARM compact model table entry: %x' % n)
-                per_index = (word0 >> 24) & 0x7f
-                if per_index == 0:
-                    # arm compact model 0
-                    opcode = [(word0 & 0xFF0000) >> 16, (word0 & 0xFF00) >> 8, word0 & 0xFF]
-                    return EHABIEntry(function_offset, per_index, opcode)
-                elif per_index == 1 or per_index == 2:
-                    # arm compact model 1/2
-                    more_word = (word0 >> 16) & 0xff
-                    opcode = [(word0 >> 8) & 0xff, (word0 >> 0) & 0xff]
-                    self._arm_idx_section.stream.seek(eh_table_offset + 4)
-                    for i in range(more_word):
-                        r = struct_parse(self._struct.EH_table_struct, self._arm_idx_section.stream)['word0']
-                        opcode.append((r >> 24) & 0xFF)
-                        opcode.append((r >> 16) & 0xFF)
-                        opcode.append((r >> 8) & 0xFF)
-                        opcode.append((r >> 0) & 0xFF)
-                    return EHABIEntry(function_offset, per_index, opcode, eh_table_offset=eh_table_offset)
-                else:
-                    return CorruptEHABIEntry('Unknown ARM compact model %d at table entry: %x' % (per_index, n))
+                return CorruptEHABIEntry('Unknown ARM compact model %d at table entry: %x' % (per_index, n))
         else:
             # highest bit is one, compact model must be 0
             if word1 & 0x7f000000 != 0:
